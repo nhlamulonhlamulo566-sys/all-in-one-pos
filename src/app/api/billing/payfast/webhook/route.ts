@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const body = await request.text();
     const params = new URLSearchParams(body);
     const fields = Object.fromEntries(params.entries());
+    if (!body) console.error('PayFast ITN request body was empty', { contentType: request.headers.get('content-type'), contentLength: request.headers.get('content-length'), transferEncoding: request.headers.get('transfer-encoding') });
     const passphrase = process.env.PAYFAST_PASSPHRASE;
     const merchantId = process.env.PAYFAST_MERCHANT_ID;
     if (!passphrase || !merchantId || !fields.m_payment_id || fields.merchant_id !== merchantId) {

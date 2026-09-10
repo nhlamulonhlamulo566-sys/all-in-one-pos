@@ -4,12 +4,13 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { initializeFirebaseAdmin } from '@/firebase/server';
 import { writeAuditEvent } from '@/lib/audit';
 
-function signature(fields: Record<string, string>, passphrase: string) {
+function signature(fields: Record<string, string>, passphrase: string, includeEmpty = false, spacesAsPlus = true) {
   const encoded = Object.entries(fields)
-    .filter(([key, value]) => key !== 'signature' && value !== '')
-    .map(([key, value]) => `${key}=${encodeURIComponent(value.trim()).replace(/%20/g, '+')}`)
+    .filter(([key, value]) => key !== 'signature' && (includeEmpty || value !== ''))
+    .map(([key, value]) => `${key}=${spacesAsPlus ? encodeURIComponent(value.trim()).replace(/%20/g, '+') : encodeURIComponent(value.trim())}`)
     .join('&');
-  return createHash('md5').update(`${encoded}&passphrase=${encodeURIComponent(passphrase.trim()).replace(/%20/g, '+')}`).digest('hex');
+  const encodedPassphrase = spacesAsPlus ? encodeURIComponent(passphrase.trim()).replace(/%20/g, '+') : encodeURIComponent(passphrase.trim());
+  return createHash('md5').update(`${encoded}&passphrase=${encodedPassphrase}`).digest('hex');
 }
 
 function nextBillingDate(date: Date) {
@@ -38,9 +39,8 @@ export async function POST(request: Request) {
       console.error('PayFast ITN identity validation failed', { hasPassphrase: Boolean(passphrase), hasMerchantId: Boolean(merchantId), paymentId: fields.m_payment_id, merchantId: fields.merchant_id });
       return NextResponse.json({ success: false }, { status: 400 });
     }
-    const expectedSignature = signature(fields, passphrase);
+    const expectedSignature = signature(fields, passphrase, true, true);
     if (fields.signature !== expectedSignature) {
-      console.error('PayFast ITN signature validation failed', { paymentId: fields.m_payment_id, received: fields.signature, expected: expectedSignature });
       return NextResponse.json({ success: false }, { status: 400 });
     }
 

@@ -27,7 +27,15 @@ export async function POST(request: Request) {
     if (fields.signature !== signature(fields, passphrase)) return NextResponse.json({ success: false }, { status: 400 });
 
     const baseUrl = process.env.PAYFAST_BASE_URL || 'https://www.payfast.co.za';
-    const confirmation = await fetch(`${baseUrl}/eng/query/validate`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+    const confirmation = await fetch(`${baseUrl}/eng/query/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'All-In-One-POS/1.0',
+        Referer: `${baseUrl}/eng/process`,
+      },
+      body,
+    });
     if ((await confirmation.text()).trim() !== 'VALID') return NextResponse.json({ success: false }, { status: 400 });
     if (fields.payment_status !== 'COMPLETE') return NextResponse.json({ success: true }, { status: 200 });
 

@@ -23,8 +23,15 @@ export async function POST(request: Request) {
     const fields = Object.fromEntries(params.entries());
     const passphrase = process.env.PAYFAST_PASSPHRASE;
     const merchantId = process.env.PAYFAST_MERCHANT_ID;
-    if (!passphrase || !merchantId || !fields.m_payment_id || fields.merchant_id !== merchantId) return NextResponse.json({ success: false }, { status: 400 });
-    if (fields.signature !== signature(fields, passphrase)) return NextResponse.json({ success: false }, { status: 400 });
+    if (!passphrase || !merchantId || !fields.m_payment_id || fields.merchant_id !== merchantId) {
+      console.error('PayFast ITN identity validation failed', { hasPassphrase: Boolean(passphrase), hasMerchantId: Boolean(merchantId), paymentId: fields.m_payment_id, merchantId: fields.merchant_id });
+      return NextResponse.json({ success: false }, { status: 400 });
+    }
+    const expectedSignature = signature(fields, passphrase);
+    if (fields.signature !== expectedSignature) {
+      console.error('PayFast ITN signature validation failed', { paymentId: fields.m_payment_id, received: fields.signature, expected: expectedSignature });
+      return NextResponse.json({ success: false }, { status: 400 });
+    }
 
     const baseUrl = process.env.PAYFAST_BASE_URL || 'https://www.payfast.co.za';
     const confirmation = await fetch(`${baseUrl}/eng/query/validate`, {
@@ -36,7 +43,11 @@ export async function POST(request: Request) {
       },
       body,
     });
-    if ((await confirmation.text()).trim() !== 'VALID') return NextResponse.json({ success: false }, { status: 400 });
+    const confirmationBody = (await confirmation.text()).trim();
+    if (confirmationBody !== 'VALID') {
+      console.error('PayFast ITN confirmation failed', { paymentId: fields.m_payment_id, status: confirmation.status, body: confirmationBody });
+      return NextResponse.json({ success: false }, { status: 400 });
+    }
     if (fields.payment_status !== 'COMPLETE') return NextResponse.json({ success: true }, { status: 200 });
 
     const { firestore } = initializeFirebaseAdmin();

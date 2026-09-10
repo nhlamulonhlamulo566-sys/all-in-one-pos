@@ -218,9 +218,10 @@ export async function completePasswordSetupAction(payload: {
   password: string;
 }) {
   try {
-    const { auth, firestore } = await requireAdmin(payload.idToken);
-    if (payload.password.length < 6) throw new Error('Password must be at least 6 characters.');
+    const { auth, firestore } = initializeFirebaseAdmin();
+    if (!payload.idToken) throw new Error('Authentication token is missing.');
     const decoded = await auth.verifyIdToken(payload.idToken);
+    if (payload.password.length < 6) throw new Error('Password must be at least 6 characters.');
     const targetAuth = await auth.getUser(decoded.uid);
     if (isProtectedSuperAdmin(targetAuth.email)) throw new Error('The protected super administrator cannot change password here.');
     await auth.updateUser(decoded.uid, { password: payload.password });

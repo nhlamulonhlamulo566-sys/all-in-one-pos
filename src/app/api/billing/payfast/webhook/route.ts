@@ -18,10 +18,20 @@ function nextBillingDate(date: Date) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.text();
-    const params = new URLSearchParams(body);
-    const fields = Object.fromEntries(params.entries());
-    if (!body) console.error('PayFast ITN request body was empty', { contentType: request.headers.get('content-type'), contentLength: request.headers.get('content-length'), transferEncoding: request.headers.get('transfer-encoding') });
+    const contentType = request.headers.get('content-type') || '';
+    let body: string;
+    let fields: Record<string, string>;
+    if (contentType.startsWith('multipart/form-data')) {
+      const formData = await request.formData();
+      fields = {};
+      formData.forEach((value, key) => {
+        if (typeof value === 'string') fields[key] = value;
+      });
+      body = new URLSearchParams(fields).toString();
+    } else {
+      body = await request.text();
+      fields = Object.fromEntries(new URLSearchParams(body).entries());
+    }
     const passphrase = process.env.PAYFAST_PASSPHRASE;
     const merchantId = process.env.PAYFAST_MERCHANT_ID;
     if (!passphrase || !merchantId || !fields.m_payment_id || fields.merchant_id !== merchantId) {

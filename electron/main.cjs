@@ -7,11 +7,13 @@ const sqlite3 = require('sqlite3').verbose();
 const { liveAppUrl: configuredLiveAppUrl } = require('./config.cjs');
 
 const liveAppUrl = process.env.LIVE_APP_URL || configuredLiveAppUrl;
+const legalTermsVersion = '2026-09-11';
 let mainWindow;
 let database;
 let terminalConfig;
 let showingTerminalLock = false;
 const configPath = path.join(app.getPath('userData'), 'terminal-config.json');
+const legalAcceptancePath = path.join(app.getPath('userData'), 'legal-acceptance.json');
 
 function getHardwareId() {
   const macAddresses = Object.values(os.networkInterfaces())
@@ -56,6 +58,10 @@ function createWindow() {
     mainWindow.loadURL('data:text/html,<h1>LIVE_APP_URL is not configured</h1><p>Set LIVE_APP_URL before starting Electron.</p>');
     return;
   }
+  if (!hasAcceptedLegalTerms()) {
+    mainWindow.loadFile(path.join(__dirname, 'legal-onboarding.html'));
+    return;
+  }
   try {
     terminalConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     if (terminalConfig.hardwareId !== getHardwareId()) {
@@ -69,14 +75,46 @@ function createWindow() {
   }
 }
 
+function hasAcceptedLegalTerms() {
+  try {
+    const acceptance = JSON.parse(fs.readFileSync(legalAcceptancePath, 'utf8'));
+    return acceptance.accepted === true;
+  } catch {
+    return false;
+  }
+}
+
+function saveLegalAcceptance() {
+  fs.mkdirSync(path.dirname(legalAcceptancePath), { recursive: true });
+  fs.writeFileSync(legalAcceptancePath, JSON.stringify({
+    accepted: true,
+    version: legalTermsVersion,
+    acceptedAt: new Date().toISOString(),
+  }), { encoding: 'utf8', mode: 0o600 });
+}
+
 function saveTerminalConfig() {
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, JSON.stringify(terminalConfig), { encoding: 'utf8', mode: 0o600 });
 }
 
 function getLocalTerminalStatus() {
+  const now = Date.now();
+  const lastSeenAt = Number(terminalConfig?.lastSeenAt || 0);
+  if (lastSeenAt && now + 60000 < lastSeenAt) {
+    terminalConfig = { ...terminalConfig, lockState: 'locked', lockReason: 'clock' };
+    saveTerminalConfig();
+  } else if (terminalConfig && now > lastSeenAt) {
+    terminalConfig = { ...terminalConfig, lastSeenAt: now };
+    saveTerminalConfig();
+  }
+  const lastSaleAt = Number(terminalConfig?.lastSaleAt || 0);
+  if (lastSaleAt && now + 60000 < lastSaleAt) {
+    terminalConfig = { ...terminalConfig, lockState: 'locked', lockReason: 'clock' };
+    saveTerminalConfig();
+  }
   const leaseExpiresAt = Number(terminalConfig?.leaseExpiresAt || 0);
-  const locked = !terminalConfig?.terminalToken || !leaseExpiresAt || terminalConfig?.lockState === 'locked' || Date.now() >= leaseExpiresAt;
+  const locked = !terminalConfig?.terminalToken || !leaseExpiresAt || terminalConfig?.lockState === 'locked' || now >= leaseExpiresAt;
   return {
     online: net.isOnline(),
     lockState: locked ? 'locked' : 'unlocked',
@@ -118,7 +156,11 @@ async function refreshTerminalStatus() {
 function showTerminalLock(status) {
   showingTerminalLock = true;
   const connection = status.online ? 'Online - Locked' : 'Offline - Locked';
-  const message = status.lockReason === 'billing' ? 'The monthly payment is due. Please contact the administrator to pay the monthly fee.' : "This terminal's four-day offline lease has expired or the shop is locked.";
+  const message = status.lockReason === 'billing'
+    ? 'The monthly payment is due. Please contact the administrator to pay the monthly fee.'
+    : status.lockReason === 'clock'
+      ? 'The computer clock appears to have moved backwards. Correct the date and time, then reconnect this terminal.'
+      : "This terminal's seven-day offline lease has expired or the shop is locked.";
   mainWindow.loadURL(`data:text/html,${encodeURIComponent(`<h1>${connection}</h1><p>${message}</p><p>Reconnect this computer to the internet after payment so the terminal can unlock.</p>`)}`);
 }
 
@@ -185,6 +227,17 @@ ipcMain.handle('get-offline-sale-count', () => new Promise((resolve, reject) => 
 
 ipcMain.handle('get-terminal-status', async () => refreshTerminalStatus());
 
+ipcMain.handle('record-sale-time', async () => {
+  terminalConfig = { ...terminalConfig, lastSaleAt: Date.now() };
+  saveTerminalConfig();
+  return { success: true };
+});
+
+ipcMain.handle('accept-legal-terms', async () => {
+  saveLegalAcceptance();
+  return { success: true, version: legalTermsVersion };
+});
+
 ipcMain.handle('redeem-activation-token', async (_event, token) => {
   if (typeof token !== 'string' || !token.trim()) return { success: false, message: 'Enter an activation token.' };
   const hardwareId = getHardwareId();
@@ -201,7 +254,8 @@ ipcMain.handle('redeem-activation-token', async (_event, token) => {
       shopName: result.shopName,
       hardwareId,
       terminalToken: result.terminalToken,
-      leaseExpiresAt: Date.now() + 4 * 24 * 60 * 60 * 1000,
+      leaseExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      lastSeenAt: Date.now(),
       lockState: 'unlocked',
     };
     saveTerminalConfig();

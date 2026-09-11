@@ -82,7 +82,28 @@
     "forge": {
       "packagerConfig": {
         "name": "SpazaPOS",
-        "executableName": "SpazaPOS"
+        "executableName": "SpazaPOS",
+        "ignore": [
+          "[\\\\/]\\.next(?:[\\\\/]|$)",
+          "[\\\\/]\\.git(?:[\\\\/]|$)",
+          "[\\\\/]\\.vercel(?:[\\\\/]|$)",
+          "[\\\\/]\\.idx(?:[\\\\/]|$)",
+          "[\\\\/]\\.vs(?:[\\\\/]|$)",
+          "[\\\\/]src(?:[\\\\/]|$)",
+          "[\\\\/]public(?:[\\\\/]|$)",
+          "[\\\\/]docs(?:[\\\\/]|$)",
+          "[\\\\/]scripts(?:[\\\\/]|$)",
+          "[\\\\/]\\.env(?:[^\\\\/]*)(?:$)",
+          "[\\\\/]README\\.md$",
+          "[\\\\/]firestore\\.rules$",
+          "[\\\\/]firebase\\.json$",
+          "[\\\\/]apphosting\\.yaml$",
+          "[\\\\/]next-env\\.d\\.ts$",
+          "[\\\\/]tsconfig(?:[^\\\\/]*)$",
+          "[\\\\/]tailwind\\.config\\.ts$",
+          "[\\\\/]postcss\\.config\\.mjs$",
+          "[\\\\/]components\\.json$"
+        ]
       },
       "makers": [
         {

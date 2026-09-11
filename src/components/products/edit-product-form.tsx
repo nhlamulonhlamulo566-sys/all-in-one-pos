@@ -38,11 +38,13 @@ const formSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
   description: z.string().min(1, 'Description is required'),
   category: z.string().min(1, 'Category is required'),
+  sizeVariant: z.string().optional(),
   price: z.coerce.number().min(0, 'Price must be a non-negative number'),
   costPrice: z.coerce.number().min(0, 'Cost price must be a non-negative number'),
   stock: z.coerce.number().int().min(0, 'Stock must be a non-negative integer'),
   location: z.string().min(1, 'Location is required'),
   threshold: z.coerce.number().int().min(0, 'Threshold must be a non-negative integer'),
+  leadTimeDays: z.coerce.number().int().min(0, 'Lead time must be a non-negative integer').default(2),
   image: z.any(),
   baseProductSku: z.string().optional(),
   containedUnits: z.coerce.number().int().min(1, 'Must contain at least 1 unit').default(1),
@@ -68,11 +70,13 @@ export function EditProductForm({ product }: EditProductFormProps) {
         sku: product.sku,
         description: product.description,
         category: product.category,
+        sizeVariant: product.sizeVariant || '',
         price: product.price,
         costPrice: product.costPrice || 0,
         stock: product.stock,
         location: product.location,
         threshold: product.threshold,
+        leadTimeDays: product.leadTimeDays || 2,
         baseProductSku: product.baseProductSku || '',
         containedUnits: product.containedUnits || 1,
     },
@@ -193,6 +197,19 @@ export function EditProductForm({ product }: EditProductFormProps) {
                     )}
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="sizeVariant"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Size or pack format</FormLabel>
+                      <FormControl><Input placeholder="e.g. 750ml bottle, 440ml can, 6-pack, 10kg bag" {...field} /></FormControl>
+                      <FormDescription>Keep sizes as separate report and supplier-order lines.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField control={form.control} name="leadTimeDays" render={({ field }) => <FormItem><FormLabel>Supplier lead time (days)</FormLabel><FormControl><Input type="number" min="0" {...field} /></FormControl><FormDescription>Used by the restock radar to warn before delivery can arrive.</FormDescription><FormMessage /></FormItem>} />
                 <FormField
                   control={form.control}
                   name="description"

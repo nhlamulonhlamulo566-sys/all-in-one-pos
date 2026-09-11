@@ -15,6 +15,9 @@ import {
   Wallet,
   Store,
   SlidersHorizontal,
+  CircleHelp,
+  Info,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -47,6 +50,9 @@ const topLevelLinks = [
   { href: '/stock-count', label: 'Stock Count', icon: ScanLine, roles: ['shop owner', 'super administrator'] },
   { href: '/reports', label: 'Reports', icon: BarChart3, roles: ['shop owner', 'super administrator'] },
   { href: '/sales', label: 'Completed Sales', icon: History, roles: ['shop owner', 'super administrator'] },
+  { href: '/help', label: 'Help & Training', icon: CircleHelp, roles: ['shop owner', 'sales', 'super administrator'] },
+  { href: '/about', label: 'About', icon: Info, roles: ['shop owner', 'sales', 'super administrator'] },
+  { href: '/security', label: 'Security', icon: ShieldCheck, roles: ['shop owner', 'sales', 'super administrator'] },
 ];
 
 const settingsLinks = [

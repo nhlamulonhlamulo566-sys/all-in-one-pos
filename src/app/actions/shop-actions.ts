@@ -484,7 +484,7 @@ export async function redeemActivationTokenAction(payload: {
         transaction.update(existingSeat.ref, {
           lastSeenAt: now,
           lastOnlineAt: now,
-          leaseExpiresAt: Timestamp.fromMillis(Date.now() + 4 * 24 * 60 * 60 * 1000),
+          leaseExpiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000),
           terminalTokenHash: hashToken(terminalToken),
           lockState: 'unlocked',
         });
@@ -502,7 +502,7 @@ export async function redeemActivationTokenAction(payload: {
         registeredAt: now,
         lastSeenAt: now,
         lastOnlineAt: now,
-        leaseExpiresAt: Timestamp.fromMillis(Date.now() + 4 * 24 * 60 * 60 * 1000),
+        leaseExpiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000),
         terminalTokenHash: hashToken(terminalToken),
         lockState: 'unlocked',
       });
@@ -516,7 +516,7 @@ export async function redeemActivationTokenAction(payload: {
   }
 }
 
-const LEASE_MS = 4 * 24 * 60 * 60 * 1000;
+const LEASE_MS = 7 * 24 * 60 * 60 * 1000;
 const HEARTBEAT_FRESH_MS = 5 * 60 * 1000;
 
 function serializeTerminalStatus(data: FirebaseFirestore.DocumentData, now = Date.now()) {
@@ -528,7 +528,7 @@ function serializeTerminalStatus(data: FirebaseFirestore.DocumentData, now = Dat
     online: true,
     lockState: locked ? 'locked' : 'unlocked',
     leaseExpiresAt: leaseExpiresAt || null,
-    offlineWindowDays: 4,
+    offlineWindowDays: 7,
   };
 }
 

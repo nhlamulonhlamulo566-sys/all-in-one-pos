@@ -16,11 +16,11 @@ import {
   DocumentSnapshot,
 } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/provider';
-import type { Product, Sale, Shop, UserProfile } from '@/lib/types';
+import type { PaymentProvider, Product, Sale, Shop, UserProfile } from '@/lib/types';
 import { PosProductList } from './pos-product-list';
 import { PosCart } from './pos-cart';
 import { createSaleAction } from '@/app/actions/sale-actions';
-import { getShopProfileAction } from '@/app/actions/shop-actions';
+import { getShopPaymentSettingsAction, getShopProfileAction } from '@/app/actions/shop-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Barcode, Printer, PauseCircle, PlayCircle, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ import { CustomerLookup } from './customer-lookup';
 import { QuickAccess } from './quick-access';
 import { CustomerForm } from './customer-form';
 import type { Customer } from '@/lib/types';
+import { StockAlertBanner, type StockAlertItem } from './stock-alert-banner';
 
 export type CartItem = {
   product: Product;
@@ -68,6 +69,8 @@ export function PosClientPage() {
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: isLoadingProfile } = useDoc<UserProfile>(userProfileRef);
   const [shop, setShop] = useState<Shop | null>(null);
+  const [cardProvider, setCardProvider] = useState<PaymentProvider>('manual_terminal');
+  const [stockAlerts, setStockAlerts] = useState<StockAlertItem[]>([]);
   const { toast } = useToast();
   const productsQuery = useMemoFirebase(
     () => {
@@ -86,6 +89,8 @@ export function PosClientPage() {
     user.getIdToken().then(async (idToken) => {
       const result = await getShopProfileAction({ idToken, shopId: userProfile.shopId! });
       if (result.success) setShop(result.shop as Shop);
+      const paymentSettings = await getShopPaymentSettingsAction({ idToken, shopId: userProfile.shopId! });
+      if (paymentSettings.success && paymentSettings.settings?.enabled) setCardProvider(paymentSettings.settings.provider as PaymentProvider);
     });
   }, [user, userProfile?.shopId]);
 
@@ -277,6 +282,7 @@ export function PosClientPage() {
         })),
       });
       if (!result.success || !result.saleId) throw new Error(result.error || 'Unable to complete sale.');
+      await window.electronAPI?.recordSaleTime?.();
       const finalSaleData: Sale = {
         ...saleDetails,
         id: result.saleId,
@@ -286,6 +292,10 @@ export function PosClientPage() {
       };
 
       const completedSaleItems = [...cart];
+      const alerts = completedSaleItems
+        .map((item) => ({ name: item.product.name, size: item.product.sizeVariant || (item.product.containedUnits ? `${item.product.containedUnits} units per pack` : 'Standard unit'), stock: item.product.stock - item.quantity, threshold: item.product.threshold }))
+        .filter((item) => item.stock <= item.threshold);
+      setStockAlerts(alerts);
       setCart([]);
       
       if (finalSaleData) {
@@ -317,6 +327,7 @@ export function PosClientPage() {
               containedUnits: item.product.containedUnits || 1,
             })),
           });
+          await electronApi.recordSaleTime?.();
           setCart([]);
           toast({
             title: 'Sale Saved Offline',
@@ -343,6 +354,7 @@ export function PosClientPage() {
   return (
     <>
       <div className="flex flex-col gap-4">
+        <StockAlertBanner items={stockAlerts} ownerPhone={shop?.phone} />
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-lg font-semibold md:text-2xl">Point of Sale</h1>
           <div className='flex items-center gap-2'>
@@ -403,6 +415,7 @@ export function PosClientPage() {
               onCancelSale={handleCancelSale}
               customer={selectedCustomer}
               onSelectCustomer={() => setCustomerLookupOpen(true)}
+              cardProvider={cardProvider}
             />
           </div>
         </div>

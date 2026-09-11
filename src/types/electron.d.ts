@@ -11,11 +11,13 @@ declare global {
 
   interface Window {
     electronAPI?: {
+      acceptLegalTerms?: () => Promise<{ success: boolean; version?: string }>;
       saveOfflineSale?: (sale: unknown) => Promise<{ success: boolean; id: string }>;
       getOfflineSaleCount?: () => Promise<number>;
       syncOfflineSales?: (config?: { idToken?: string }) => Promise<{ synced: number }>;
       redeemActivationToken?: (token: string) => Promise<{ success: boolean; shopName?: string; message?: string }>;
       getTerminalStatus?: () => Promise<TerminalStatus>;
+      recordSaleTime?: () => Promise<{ success: boolean }>;
     };
   }
 }

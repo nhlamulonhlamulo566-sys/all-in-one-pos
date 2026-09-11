@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Trash2, Ban, Tag, Split, Gift, User } from 'lucide-react';
 import type { CartItem } from './pos-client-page';
-import type { Customer, SaleDiscount, Payment } from '@/lib/types';
+import type { Customer, SaleDiscount, Payment, PaymentProvider } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -47,6 +47,7 @@ interface PosCartProps {
   onCancelSale: () => void;
   customer?: Customer | null;
   onSelectCustomer?: () => void;
+  cardProvider?: PaymentProvider;
 }
 
 export function PosCart({
@@ -58,6 +59,7 @@ export function PosCart({
   onCancelSale,
   customer,
   onSelectCustomer,
+  cardProvider = 'manual_terminal',
 }: PosCartProps) {
   const [amountPaid, setAmountPaid] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
@@ -115,6 +117,11 @@ export function PosCart({
       });
       return;
     }
+    const recordedPayments: Payment[] | undefined = payments && payments.length > 1
+      ? payments
+      : paymentMethod === 'card'
+        ? [{ method: 'card', amount: total, reference: paymentReference.trim(), provider: cardProvider, status: 'approved' }]
+        : undefined;
     const saleDetails = {
       subtotal,
       taxRate,
@@ -130,7 +137,7 @@ export function PosCart({
       storeCreditAmount: storageCreditRedeemed || undefined,
       discounts: appliedDiscounts.length > 0 ? appliedDiscounts : undefined,
       discountTotal: discountTotal > 0 ? discountTotal : undefined,
-      payments: payments && payments.length > 1 ? payments : undefined,
+      payments: recordedPayments,
       notes: notes || undefined,
     };
     onCompleteSale(saleDetails);
@@ -370,7 +377,7 @@ export function PosCart({
                   htmlFor="card"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                 >
-                  Card
+                  Card{cardProvider !== 'manual_terminal' ? ` · ${cardProvider === 'yoco' ? 'Yoco' : cardProvider === 'ikhokha' ? 'iKhokha' : cardProvider}` : ''}
                 </Label>
               </div>
             </RadioGroup>
@@ -398,7 +405,7 @@ export function PosCart({
             <div className="space-y-1">
               <label htmlFor="payment-reference" className="text-sm font-medium">Terminal approval reference</label>
               <Input id="payment-reference" value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} placeholder="Reference from the approved card receipt" />
-              <p className="text-xs text-muted-foreground">Complete the payment on the card machine first, then enter its approval or receipt number.</p>
+              <p className="text-xs text-muted-foreground">Complete the payment on the {cardProvider === 'yoco' ? 'Yoco' : cardProvider === 'ikhokha' ? 'iKhokha' : 'card'} machine first, then enter its approval or receipt number.</p>
             </div>
           )}
         </div>

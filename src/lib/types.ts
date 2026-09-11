@@ -17,6 +17,10 @@ export type Product = {
   imageUrl?: string;
   baseProductSku?: string;
   containedUnits?: number;
+  size?: string;
+  sizeVariant?: string;
+  unitLabel?: string;
+  leadTimeDays?: number;
   isArchived?: boolean;
 };
 

@@ -97,7 +97,7 @@ export default function ShopsPage() {
   const handleUnlock = async () => {
     if (!auth?.currentUser || !selectedShopId) return;
     const result = await unlockShopTerminalsAction({ shopId: selectedShopId, idToken: await auth.currentUser.getIdToken() });
-    if (result.success) toast({ title: 'Shop unlocked', description: 'All recently connected terminals received a new four-day lease.' });
+    if (result.success) toast({ title: 'Shop unlocked', description: 'All recently connected terminals received a new seven-day lease.' });
     else toast({ variant: 'destructive', title: 'Shop remains locked', description: result.error });
   };
 

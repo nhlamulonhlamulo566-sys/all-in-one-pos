@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All In One POS | Licence and Setup</title>
+  <style>
+    :root { color-scheme: dark; --bg: #101816; --panel: #182421; --line: #31504a; --muted: #adc2bc; --text: #f4f7f6; --accent: #e8b45d; --good: #78d6b2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; padding: 28px; background: radial-gradient(circle at top right, #21443b 0, var(--bg) 45%); color: var(--text); font: 14px Segoe UI, Arial, sans-serif; }
+    main { width: min(920px, 100%); margin: 0 auto; }
+    .eyebrow { color: var(--good); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 8px 0 10px; font-size: clamp(26px, 5vw, 42px); letter-spacing: -.03em; }
+    .intro { max-width: 720px; color: var(--muted); line-height: 1.65; }
+    .panel { margin-top: 22px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: rgba(24, 36, 33, .94); box-shadow: 0 20px 60px rgba(0, 0, 0, .22); }
+    h2 { margin: 0 0 12px; font-size: 16px; }
+    .terms { height: 230px; overflow-y: auto; padding: 18px; border: 1px solid #29423d; border-radius: 10px; background: #0d1412; color: #d7e2df; line-height: 1.65; }
+    .terms p { margin: 0 0 14px; }
+    .terms strong { color: #f4d18e; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .spec { padding: 13px; border: 1px solid #29423d; border-radius: 10px; background: #0d1412; }
+    .spec small { display: block; margin-bottom: 6px; color: #829b94; text-transform: uppercase; letter-spacing: .08em; font-size: 9px; }
+    .spec span { color: var(--good); font-family: Consolas, monospace; font-size: 12px; font-weight: 700; }
+    label { display: flex; align-items: flex-start; gap: 10px; margin: 22px 0; color: #dce8e4; line-height: 1.5; cursor: pointer; }
+    input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--accent); }
+    button { width: 100%; padding: 14px 18px; border: 0; border-radius: 9px; background: var(--accent); color: #1a211e; font-size: 14px; font-weight: 800; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .42; }
+    .note { margin-top: 12px; color: #829b94; font-size: 11px; line-height: 1.55; }
+    @media (max-width: 680px) { body { padding: 16px; } .panel { padding: 18px; } .grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">All In One POS · First-run setup</div>
+    <h1>Review the licence before activation</h1>
+    <p class="intro">This terminal uses a local Electron security shell, a protected cloud account, and an offline sale queue. Please review the operating terms and the components installed on this computer before continuing to activation.</p>
+
+    <section class="panel">
+      <h2>End-user licence and operating terms</h2>
+      <div class="terms" tabindex="0">
+        <p><strong>1. Conditional licence.</strong> All In One POS is licensed as a month-to-month service for the registered shop and authorised terminals. It is not sold as a transfer of the underlying software.</p>
+        <p><strong>2. Account and terminal access.</strong> The shop owner is responsible for authorised users, terminal seats, passwords, activation tokens, and activity performed through the account. Do not share credentials or activation tokens with unauthorised people.</p>
+        <p><strong>3. No tampering or unauthorised copying.</strong> Do not modify the Electron container, bypass access controls, inspect or extract secrets, or copy a terminal configuration to an unauthorised computer. The service may lock a terminal when its hardware identity, activation state, billing state, or lease is invalid.</p>
+        <p><strong>4. Connectivity and offline operation.</strong> The POS may queue sales locally during a temporary outage. Queued sales remain subject to later server validation and synchronisation. A terminal lease can expire when it has not successfully checked in within the configured period.</p>
+        <p><strong>5. Time and security checks.</strong> The terminal records a local last-seen time and may lock when the computer clock moves backwards or when other integrity checks fail. Correct the computer time and reconnect the terminal; do not attempt to bypass a lock.</p>
+        <p><strong>6. Payments and records.</strong> Cashiers must only record a card payment after the physical Yoco, iKhokha, or other configured terminal shows approval. PayFast is used for the configured subscription billing flow. The POS does not store full card details. The shop remains responsible for cash-up, stock counts, pricing, tax, licensing, and legal compliance.</p>
+        <p><strong>7. Data responsibility.</strong> The system provides operational tools, audit records, backups/synchronisation where available, and shop-scoped access controls. Review records regularly and report suspected unauthorised access promptly. This agreement is an operational software notice, not legal, tax, accounting, or financial advice.</p>
+        <p><strong>8. Changes and support.</strong> The service provider may update the software, security controls, supported integrations, and terms. Contact the authorised administrator for billing, terminal replacement, or access problems.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Installed component summary</h2>
+      <div class="grid">
+        <div class="spec"><small>Desktop shell</small><span>Electron + sandboxed preload</span></div>
+        <div class="spec"><small>Local queue</small><span>SQLite offline sales</span></div>
+        <div class="spec"><small>Cloud records</small><span>Firebase Auth / Firestore</span></div>
+        <div class="spec"><small>Terminal control</small><span>Activation + lease status</span></div>
+        <div class="spec"><small>Security checks</small><span>Device + clock integrity</span></div>
+        <div class="spec"><small>Payment record</small><span>ZAR terminal reference</span></div>
+      </div>
+      <p class="note">The displayed component summary describes the current application architecture. It is not a guarantee of absolute security or uninterrupted availability.</p>
+    </section>
+
+    <section class="panel">
+      <label><input id="agree" type="checkbox"> <span>I have read and accept the All In One POS operating terms and component summary. I understand that activation and use of this terminal are subject to the shop account, authorised terminal, billing status, and security checks.</span></label>
+      <button id="continue" type="button" disabled>Accept and continue to activation</button>
+      <p class="note">Your acceptance is stored locally with a version and timestamp. You can contact the administrator if the shop needs a replacement terminal or the terms change.</p>
+    </section>
+  </main>
+  <script>
+    const agree = document.getElementById('agree');
+    const continueButton = document.getElementById('continue');
+    agree.addEventListener('change', () => { continueButton.disabled = !agree.checked; });
+    continueButton.addEventListener('click', async () => {
+      continueButton.disabled = true;
+      continueButton.textContent = 'Saving acceptance...';
+      const result = await window.electronAPI.acceptLegalTerms();
+      if (!result.success) {
+        continueButton.disabled = false;
+        continueButton.textContent = 'Try again';
+        return;
+      }
+      window.location.replace('activate.html');
+    });
+  </script>
+</body>
+</html>

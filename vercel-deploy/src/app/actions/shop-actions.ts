@@ -253,15 +253,16 @@ export async function listAuditEventsAction(payload: { idToken: string; shopId?:
     const isSuperAdmin = profile.data()?.role === 'super administrator' || (await firestore.collection('roles_super_admin').doc(decoded.uid).get()).exists;
     const shopId = isSuperAdmin ? payload.shopId : profile.data()?.shopId;
     if (!isSuperAdmin && !shopId) throw new Error('Your account is not assigned to a shop.');
-    let query: FirebaseFirestore.Query = firestore.collection('audit_logs').orderBy('createdAt', 'desc').limit(100);
-    if (shopId) query = firestore.collection('audit_logs').where('shopId', '==', shopId).orderBy('createdAt', 'desc').limit(100);
+    let query: FirebaseFirestore.Query = shopId
+      ? firestore.collection('audit_logs').where('shopId', '==', shopId).limit(100)
+      : firestore.collection('audit_logs').limit(100);
     const snapshot = await query.get();
     return {
       success: true,
       events: snapshot.docs.map((event) => {
         const data = event.data();
         return { id: event.id, action: data.action || '', actorId: data.actorId || '', actorName: data.actorName || null, shopId: data.shopId || null, entityType: data.entityType || '', entityId: data.entityId || '', details: data.details || {}, createdAt: data.createdAt?.toMillis?.() || null };
-      }),
+      }).sort((left, right) => (right.createdAt || 0) - (left.createdAt || 0)),
     };
   } catch (error: any) {
     return { success: false, error: error.message || 'Unable to load audit events.' };

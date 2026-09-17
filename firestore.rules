@@ -323,7 +323,7 @@ service cloud.firestore {
     match /sales/{saleId} {
       allow create: if isSignedIn() && isAdmin() && canAccessShop(request.resource.data);
       allow get: if isAdmin() && canAccessShop(resource.data);
-      allow list: if isSignedIn() && (request.auth.token.email == 'jeff@gmail.com' || (isAdmin() && canAccessShop(resource.data)));
+      allow read: if isSignedIn() && (request.auth.token.email == 'jeff@gmail.com' || (isAdmin() && canAccessShop(resource.data)));
       allow update: if isSignedIn() && isAdmin() && resource != null && canAccessShop(resource.data) && canAccessShop(request.resource.data);
       allow delete: if isSignedIn() && isAdmin() && resource != null && canAccessShop(resource.data);
 

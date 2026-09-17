@@ -130,6 +130,8 @@ export type Shop = {
   maxDevicesAllowed: number;
   createdAt: any;
   ownerUid?: string;
+  activationToken?: string | null;
+  activationTokenExpiresAt?: number | null;
 };
 
 // Customer Profiles & Loyalty

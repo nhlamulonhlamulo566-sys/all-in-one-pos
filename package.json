@@ -121,6 +121,7 @@
   "build": {
     "appId": "com.allinonepos.desktop",
     "productName": "All In One POS",
+    "artifactName": "All-In-One-POS-Setup-${version}.${ext}",
     "directories": {
       "output": "out-builder"
     },

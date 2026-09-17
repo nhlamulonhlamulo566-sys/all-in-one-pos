@@ -434,7 +434,12 @@ export function SalesList() {
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
-  const salesQuery = useMemoFirebase(() => null, []);
+  const salesQuery = useMemoFirebase(
+    () => firestore && userProfile?.shopId && userProfile.role !== 'super administrator'
+      ? query(collection(firestore, 'sales'), where('shopId', '==', userProfile.shopId), orderBy('createdAt', 'desc'), limit(50))
+      : null,
+    [firestore, userProfile]
+  );
   const { data: sales, isLoading: isLoadingSales } = useCollection<Sale>(salesQuery);
 
   const isAdmin =

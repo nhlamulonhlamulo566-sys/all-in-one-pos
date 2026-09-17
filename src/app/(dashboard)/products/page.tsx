@@ -38,18 +38,19 @@ import {
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { useSelectedShopContext } from '@/contexts/shop-context';
 
 export default function ProductsPage() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
+  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const profileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: profile } = useDoc<UserProfile>(profileRef);
+  const scopedShopId = isSuperAdmin ? selectedShopId || profile?.shopId : profile?.shopId;
   const productsQuery = useMemoFirebase(() => {
     if (!firestore || !profile) return null;
-    return profile.role === 'super administrator'
-      ? query(collection(firestore, 'products'))
-      : profile.shopId ? query(collection(firestore, 'products'), where('shopId', '==', profile.shopId)) : null;
-  }, [firestore, profile]);
+    return scopedShopId ? query(collection(firestore, 'products'), where('shopId', '==', scopedShopId)) : null;
+  }, [firestore, profile, scopedShopId]);
   const { data: products, isLoading } = useCollection<Product>(productsQuery);
   const { toast } = useToast();
 

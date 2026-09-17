@@ -87,6 +87,8 @@ export async function listShopsAction(payload: { idToken: string }) {
           maxDevicesAllowed: Number(data.maxDevicesAllowed || 0),
           ownerUid: data.ownerUid || null,
           createdAt: data.createdAt?.toMillis?.() || null,
+          activationToken: data.activationToken || null,
+          activationTokenExpiresAt: data.activationTokenExpiresAt?.toMillis?.() || null,
         };
       })
       .sort((left: any, right: any) => {
@@ -313,6 +315,7 @@ export async function createShopAction(payload: {
           createdAt: now,
           createdBy: uid,
           activationTokenHash: hashToken(activationToken),
+          activationToken,
           activationTokenCreatedAt: now,
           activationTokenExpiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000),
         });
@@ -418,6 +421,7 @@ export async function regenerateActivationTokenAction(payload: { idToken: string
     const shopRef = firestore.collection('shops').doc(normalizeShopId(payload.shopId));
     await shopRef.update({
       activationTokenHash: hashToken(token),
+      activationToken: token,
       activationTokenCreatedAt: Timestamp.now(),
       activationTokenExpiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000),
     });

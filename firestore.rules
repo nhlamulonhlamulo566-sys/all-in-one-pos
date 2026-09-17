@@ -143,7 +143,8 @@ service cloud.firestore {
         allow create: if isSignedIn() && isOwner(userId);
       allow get: if isSignedIn() && (
         isOwner(userId) ||
-        (isAdmin() && (isSuperAdmin() || resource.data.shopId == userShopId()))
+        isSuperAdmin() ||
+        (isAdmin() && resource.data.shopId == userShopId())
       );
       allow list: if isSignedIn() && isAdmin() && (isSuperAdmin() || resource.data.shopId == userShopId());
         allow update: if isSignedIn() && isAdmin() && !isProtectedSuperAdmin(userId)

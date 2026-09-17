@@ -45,7 +45,13 @@ export default function ShopsPage() {
       if (result.success) {
         const nextShops = result.shops as Shop[];
         setShops(nextShops);
-        if (!selectedShopId && nextShops[0]) setSelectedShopId(nextShops[0].id);
+        const nextSelectedShop = nextShops.find((shop) => shop.id === selectedShopId) || nextShops[0];
+        if (nextSelectedShop) {
+          if (!selectedShopId) setSelectedShopId(nextSelectedShop.id);
+          if (nextSelectedShop.activationToken && (!nextSelectedShop.activationTokenExpiresAt || nextSelectedShop.activationTokenExpiresAt > Date.now())) {
+            setActivationToken(nextSelectedShop.activationToken);
+          }
+        }
       } else toast({ variant: 'destructive', title: 'Unable to load shops', description: result.error });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Unable to load shops', description: error.message || 'Please try again.' });
@@ -135,7 +141,7 @@ export default function ShopsPage() {
               <div className="space-y-2"><Label htmlFor="device-limit">Package PC limit</Label><Input id="device-limit" type="number" min="1" value={form.maxDevicesAllowed} onChange={(e) => setForm({ ...form, maxDevicesAllowed: e.target.value })} required /></div>
               <Button type="submit" className="w-full" disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create Shop</Button>
             </form>
-            {activationToken && <div className="mt-4 rounded-md border bg-muted p-3"><p className="text-xs text-muted-foreground">Use this activation token on each registered shop computer within 24 hours:</p><div className="flex items-center gap-2"><code className="font-semibold">{activationToken}</code><Button type="button" variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(activationToken)} title="Copy activation token"><Copy className="h-4 w-4" /></Button></div></div>}
+            {activationToken && <div className="mt-4 rounded-md border bg-muted p-3"><p className="text-xs text-muted-foreground">Active activation token for the selected shop. Use it on each registered shop computer before it expires:</p><div className="flex items-center gap-2"><code className="font-semibold">{activationToken}</code><Button type="button" variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(activationToken)} title="Copy activation token"><Copy className="h-4 w-4" /></Button></div></div>}
           </CardContent>
         </Card>
         <Card>

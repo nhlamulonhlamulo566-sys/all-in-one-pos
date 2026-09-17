@@ -1,0 +1,16 @@
+.git
+.vs
+.idx
+.vercel
+.next
+out-builder
+node_modules
+scripts
+docs
+electron
+*.exe
+*.blockmap
+*.log
+.env
+.env.*
+!/.env.example

@@ -1,6 +1,6 @@
 {
   "name": "nextn",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev -p 9002",
@@ -13,6 +13,7 @@
     "electron:dev": "electron electron/main.cjs",
     "electron:rebuild": "electron-rebuild -f -w sqlite3",
     "electron:make": "npm run electron:rebuild && electron-forge make",
+    "electron:make:builder": "npm run electron:rebuild && electron-builder --win nsis",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
@@ -67,6 +68,7 @@
     "@types/react": "18.3.2",
     "@types/react-dom": "18.3.0",
     "electron": "^44.1.1",
+    "electron-builder": "^26.15.3",
     "postcss": "8.4.38",
     "tailwindcss": "3.4.3",
     "typescript": "5.4.5"
@@ -102,7 +104,8 @@
           "[\\\\/]tsconfig(?:[^\\\\/]*)$",
           "[\\\\/]tailwind\\.config\\.ts$",
           "[\\\\/]postcss\\.config\\.mjs$",
-          "[\\\\/]components\\.json$"
+          "[\\\\/]components\\.json$",
+          "[\\\\/]node_modules[\\/](?!(?:sqlite3|bindings|file-uri-to-path)(?:[\\/]|$))"
         ]
       },
       "makers": [
@@ -113,6 +116,29 @@
           }
         }
       ]
+    }
+  },
+  "build": {
+    "appId": "com.allinonepos.desktop",
+    "productName": "All In One POS",
+    "directories": {
+      "output": "out-builder"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "node_modules/sqlite3/**/*",
+      "node_modules/bindings/**/*",
+      "node_modules/file-uri-to-path/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "executableName": "AllInOnePOS"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
     }
   }
 }

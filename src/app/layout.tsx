@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
+import { ShopProvider } from '@/contexts/shop-context';
 
 export const metadata: Metadata = {
   title: 'All In One POS',
@@ -36,10 +37,12 @@ export default function RootLayout({
       <body className={`${ptSans.variable} font-body antialiased`}>
         <ServiceWorkerRegistration />
         <FirebaseClientProvider>
+          <ShopProvider>
             <SidebarProvider>
               {children}
               <Toaster />
             </SidebarProvider>
+          </ShopProvider>
         </FirebaseClientProvider>
       </body>
     </html>

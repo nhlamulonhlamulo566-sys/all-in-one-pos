@@ -14,20 +14,23 @@ import { collection, query, doc, where } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import type { Product, Sale } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSelectedShopContext } from '@/contexts/shop-context';
 
 export default function Dashboard() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const profileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: profile } = useDoc<UserProfile>(profileRef);
+  const scopedShopId = isSuperAdmin ? selectedShopId || profile?.shopId : profile?.shopId;
   const productsQuery = useMemoFirebase(
-    () => (firestore && profile?.shopId ? query(collection(firestore, 'products'), where('shopId', '==', profile.shopId)) : null),
-    [firestore, profile?.shopId]
+    () => (firestore && scopedShopId ? query(collection(firestore, 'products'), where('shopId', '==', scopedShopId)) : null),
+    [firestore, scopedShopId]
   );
   const { data: products, isLoading } = useCollection<Product>(productsQuery);
   const salesQuery = useMemoFirebase(
-    () => (firestore && profile?.shopId ? query(collection(firestore, 'sales'), where('shopId', '==', profile.shopId)) : null),
-    [firestore, profile?.shopId]
+    () => (firestore && scopedShopId ? query(collection(firestore, 'sales'), where('shopId', '==', scopedShopId)) : null),
+    [firestore, scopedShopId]
   );
   const { data: sales, isLoading: isLoadingSales } = useCollection<Sale>(salesQuery);
 

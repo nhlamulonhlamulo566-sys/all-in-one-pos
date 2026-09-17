@@ -30,6 +30,7 @@ import type { UserProfile } from '@/lib/types';
 import type { SaleItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMemo, useState, useEffect } from 'react';
+import { useSelectedShopContext } from '@/contexts/shop-context';
 import {
   Select,
   SelectContent,
@@ -65,20 +66,18 @@ const getUniqueMonths = (items: SaleItem[] | null): string[] => {
 export function SalesByProductChart() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const profileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: profile } = useDoc<UserProfile>(profileRef);
+  const scopedShopId = isSuperAdmin ? selectedShopId || profile?.shopId : profile?.shopId;
   const [selectedMonth, setSelectedMonth] = useState<string>('');
 
   const saleItemsQuery = useMemoFirebase(
     () => {
-      if (!firestore || !profile) return null;
-      return profile.role === 'super administrator'
-        ? query(collectionGroup(firestore, 'items'))
-        : profile.shopId
-          ? query(collectionGroup(firestore, 'items'), where('shopId', '==', profile.shopId))
-          : null;
+      if (!firestore || !profile || !scopedShopId) return null;
+      return query(collectionGroup(firestore, 'items'), where('shopId', '==', scopedShopId));
     },
-    [firestore, profile]
+    [firestore, profile, scopedShopId]
   );
   const { data: saleItems, isLoading } = useCollection<SaleItem>(saleItemsQuery);
 

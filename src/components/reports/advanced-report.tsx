@@ -6,6 +6,7 @@ import { Pie, PieChart, ResponsiveContainer, Tooltip, Cell } from 'recharts';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { useMemoFirebase } from '@/firebase/provider';
 import type { Product, SaleItem, UserProfile } from '@/lib/types';
+import { useSelectedShopContext } from '@/contexts/shop-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,16 +49,18 @@ const money = (value: number) => `R${value.toLocaleString('en-ZA', { minimumFrac
 export function AdvancedReport() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const profileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: profile } = useDoc<UserProfile>(profileRef);
+  const scopedShopId = isSuperAdmin ? selectedShopId || profile?.shopId : profile?.shopId;
   const productsQuery = useMemoFirebase(() => {
-    if (!firestore || !profile) return null;
-    return profile.role === 'super administrator' ? collection(firestore, 'products') : profile.shopId ? query(collection(firestore, 'products'), where('shopId', '==', profile.shopId)) : null;
-  }, [firestore, profile]);
+    if (!firestore || !profile || !scopedShopId) return null;
+    return query(collection(firestore, 'products'), where('shopId', '==', scopedShopId));
+  }, [firestore, profile, scopedShopId]);
   const saleItemsQuery = useMemoFirebase(() => {
-    if (!firestore || !profile) return null;
-    return profile.role === 'super administrator' ? collectionGroup(firestore, 'items') : profile.shopId ? query(collectionGroup(firestore, 'items'), where('shopId', '==', profile.shopId)) : null;
-  }, [firestore, profile]);
+    if (!firestore || !profile || !scopedShopId) return null;
+    return query(collectionGroup(firestore, 'items'), where('shopId', '==', scopedShopId));
+  }, [firestore, profile, scopedShopId]);
   const { data: products, isLoading: productsLoading } = useCollection<ReportProduct>(productsQuery);
   const { data: saleItems, isLoading: salesLoading } = useCollection<SaleItem>(saleItemsQuery);
   const [activeGroup, setActiveGroup] = useState<GroupKey>('groceries');

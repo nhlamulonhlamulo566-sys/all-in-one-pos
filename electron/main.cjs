@@ -64,7 +64,7 @@ function createWindow() {
   }
   try {
     terminalConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    if (terminalConfig.hardwareId !== getHardwareId()) {
+    if (!isRegisteredTerminal() || terminalConfig.hardwareId !== getHardwareId()) {
       terminalConfig = undefined;
       mainWindow.loadFile(path.join(__dirname, 'activate.html'));
       return;
@@ -73,6 +73,15 @@ function createWindow() {
   } catch {
     mainWindow.loadFile(path.join(__dirname, 'activate.html'));
   }
+}
+
+function isRegisteredTerminal() {
+  return Boolean(
+    terminalConfig?.shopId &&
+    terminalConfig?.hardwareId &&
+    terminalConfig?.terminalToken &&
+    terminalConfig?.leaseExpiresAt
+  );
 }
 
 function hasAcceptedLegalTerms() {
@@ -154,17 +163,16 @@ async function refreshTerminalStatus() {
 }
 
 function showTerminalLock(status) {
-  showingTerminalLock = true;
-  const connection = status.online ? 'Online - Locked' : 'Offline - Locked';
-  const message = status.lockReason === 'billing'
-    ? 'The monthly payment is due. Please contact the administrator to pay the monthly fee.'
-    : status.lockReason === 'clock'
-      ? 'The computer clock appears to have moved backwards. Correct the date and time, then reconnect this terminal.'
-      : "This terminal's seven-day offline lease has expired or the shop is locked.";
-  mainWindow.loadURL(`data:text/html,${encodeURIComponent(`<h1>${connection}</h1><p>${message}</p><p>Reconnect this computer to the internet after payment so the terminal can unlock.</p>`)}`);
+  showingTerminalLock = false;
+  mainWindow.loadFile(path.join(__dirname, 'activate.html'));
 }
 
 function loadLiveApp() {
+  if (!isRegisteredTerminal()) {
+    showingTerminalLock = false;
+    mainWindow.loadFile(path.join(__dirname, 'activate.html'));
+    return;
+  }
   const status = getLocalTerminalStatus();
   if (status.lockState === 'locked') {
     showTerminalLock(status);
@@ -259,6 +267,7 @@ ipcMain.handle('redeem-activation-token', async (_event, token) => {
       lockState: 'unlocked',
     };
     saveTerminalConfig();
+    showingTerminalLock = false;
     loadLiveApp();
     return { success: true, shopName: result.shopName };
   } catch {
@@ -274,6 +283,12 @@ app.whenReady().then(() => {
   createDatabase();
   createWindow();
   setInterval(async () => {
+    if (!isRegisteredTerminal()) {
+      if (!showingTerminalLock && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadFile(path.join(__dirname, 'activate.html'));
+      }
+      return;
+    }
     const status = await refreshTerminalStatus();
     if (status.lockState === 'locked') {
       if (!showingTerminalLock) showTerminalLock(status);

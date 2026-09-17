@@ -8,6 +8,7 @@ import { startOfToday, startOfWeek, startOfMonth, endOfToday, endOfWeek, endOfMo
 import { Loader2, User, Ban, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useSelectedShopContext } from '@/contexts/shop-context';
 import {
   Accordion,
   AccordionContent,
@@ -93,19 +94,21 @@ const PeriodSection = ({ title, stats }: { title: string; stats: PaymentStats })
 export default function CashUpPage() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const profileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: profile } = useDoc<UserProfile>(profileRef);
+  const scopedShopId = isSuperAdmin ? selectedShopId || profile?.shopId : profile?.shopId;
 
   const salesQuery = useMemoFirebase(() => {
-    if (!firestore || !profile) return null;
-    return profile.role === 'super administrator' ? query(collection(firestore, 'sales')) : profile.shopId ? query(collection(firestore, 'sales'), where('shopId', '==', profile.shopId)) : null;
-  }, [firestore, profile]);
+    if (!firestore || !profile || !scopedShopId) return null;
+    return query(collection(firestore, 'sales'), where('shopId', '==', scopedShopId));
+  }, [firestore, profile, scopedShopId]);
   const { data: sales, isLoading: salesLoading } = useCollection<Sale>(salesQuery);
   
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore || !profile) return null;
-    return profile.role === 'super administrator' ? query(collection(firestore, 'users')) : profile.shopId ? query(collection(firestore, 'users'), where('shopId', '==', profile.shopId)) : null;
-  }, [firestore, profile]);
+    if (!firestore || !profile || !scopedShopId) return null;
+    return query(collection(firestore, 'users'), where('shopId', '==', scopedShopId));
+  }, [firestore, profile, scopedShopId]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
   const salespersonTotals: SalespersonTotals = useMemo(() => {

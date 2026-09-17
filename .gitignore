@@ -12,6 +12,7 @@
 # next.js
 /.next/
 /out/
+/out-builder/
 
 # production
 /build
@@ -47,3 +48,7 @@ next-env.d.ts
 /.idx/
 /.vs/
 /.modified
+/.vscode/
+
+.vercel
+.env*

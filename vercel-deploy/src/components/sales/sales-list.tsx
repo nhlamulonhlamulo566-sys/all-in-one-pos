@@ -426,7 +426,6 @@ function SaleAccordionItem({ sale, isAdmin }: { sale: Sale, isAdmin: boolean }) 
 export function SalesList() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | NonNullable<Sale['status']>>('all');
   const userProfileRef = useMemoFirebase(
@@ -435,16 +434,7 @@ export function SalesList() {
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
-  const salesQuery = useMemoFirebase(
-    () => {
-      if (!firestore || !userProfile) return null;
-      const shopScope = isSuperAdmin ? selectedShopId || userProfile.shopId : userProfile.shopId;
-      return shopScope
-        ? query(collection(firestore, 'sales'), where('shopId', '==', shopScope), orderBy('createdAt', 'desc'), limit(50))
-        : null;
-    },
-    [firestore, userProfile, isSuperAdmin, selectedShopId]
-  );
+  const salesQuery = useMemoFirebase(() => null, []);
   const { data: sales, isLoading: isLoadingSales } = useCollection<Sale>(salesQuery);
 
   const isAdmin =

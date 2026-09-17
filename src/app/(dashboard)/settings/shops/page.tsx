@@ -69,6 +69,11 @@ export default function ShopsPage() {
 
   useEffect(() => { loadShops(); }, [user?.uid]);
   useEffect(() => { loadSeats(selectedShopId); }, [selectedShopId, user?.uid]);
+  useEffect(() => {
+    const selectedShop = shops.find((shop) => shop.id === selectedShopId);
+    const tokenIsActive = selectedShop?.activationToken && (!selectedShop.activationTokenExpiresAt || selectedShop.activationTokenExpiresAt > Date.now());
+    setActivationToken(tokenIsActive ? selectedShop.activationToken || '' : '');
+  }, [selectedShopId, shops]);
 
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();

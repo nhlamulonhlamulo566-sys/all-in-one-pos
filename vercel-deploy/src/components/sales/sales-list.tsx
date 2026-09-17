@@ -23,6 +23,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useUser, useAuth } from '@/firebase';
 import { useMemoFirebase } from '@/firebase/provider';
+import { useSelectedShopContext } from '@/contexts/shop-context';
 import { collection, query, orderBy, doc, limit, where } from 'firebase/firestore';
 import type { Sale, SaleItem, UserProfile } from '@/lib/types';
 import { format } from 'date-fns';
@@ -425,6 +426,7 @@ function SaleAccordionItem({ sale, isAdmin }: { sale: Sale, isAdmin: boolean }) 
 export function SalesList() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const { selectedShopId, isSuperAdmin } = useSelectedShopContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | NonNullable<Sale['status']>>('all');
   const userProfileRef = useMemoFirebase(
@@ -436,13 +438,12 @@ export function SalesList() {
   const salesQuery = useMemoFirebase(
     () => {
       if (!firestore || !userProfile) return null;
-      return userProfile.role === 'super administrator'
-        ? query(collection(firestore, 'sales'), orderBy('createdAt', 'desc'), limit(50))
-        : userProfile.shopId
-          ? query(collection(firestore, 'sales'), where('shopId', '==', userProfile.shopId), orderBy('createdAt', 'desc'), limit(50))
-          : null;
+      const shopScope = isSuperAdmin ? selectedShopId || userProfile.shopId : userProfile.shopId;
+      return shopScope
+        ? query(collection(firestore, 'sales'), where('shopId', '==', shopScope), orderBy('createdAt', 'desc'), limit(50))
+        : null;
     },
-    [firestore, userProfile]
+    [firestore, userProfile, isSuperAdmin, selectedShopId]
   );
   const { data: sales, isLoading: isLoadingSales } = useCollection<Sale>(salesQuery);
 

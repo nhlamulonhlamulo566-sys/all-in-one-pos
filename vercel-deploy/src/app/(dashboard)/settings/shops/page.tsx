@@ -32,7 +32,7 @@ export default function ShopsPage() {
   const [form, setForm] = useState({ shopId: '', shopName: '', ownerEmail: '', ownerTemporaryPassword: '', maxUsersAllowed: '3', maxDevicesAllowed: '3' });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activationToken, setActivationToken] = useState('');
+  const [activationTokens, setActivationTokens] = useState<Record<string, string>>({});
 
   const loadShops = async () => {
     if (!user) {
@@ -45,12 +45,18 @@ export default function ShopsPage() {
       if (result.success) {
         const nextShops = result.shops as Shop[];
         setShops(nextShops);
+        setActivationTokens((currentTokens) => {
+          const nextTokens = { ...currentTokens };
+          nextShops.forEach((shop) => {
+            const tokenIsActive = shop.activationToken && (!shop.activationTokenExpiresAt || shop.activationTokenExpiresAt > Date.now());
+            if (tokenIsActive) nextTokens[shop.id] = shop.activationToken || '';
+            else delete nextTokens[shop.id];
+          });
+          return nextTokens;
+        });
         const nextSelectedShop = nextShops.find((shop) => shop.id === selectedShopId) || nextShops[0];
         if (nextSelectedShop) {
           if (!selectedShopId) setSelectedShopId(nextSelectedShop.id);
-          if (nextSelectedShop.activationToken && (!nextSelectedShop.activationTokenExpiresAt || nextSelectedShop.activationTokenExpiresAt > Date.now())) {
-            setActivationToken(nextSelectedShop.activationToken);
-          }
         }
       } else toast({ variant: 'destructive', title: 'Unable to load shops', description: result.error });
     } catch (error: any) {
@@ -69,12 +75,6 @@ export default function ShopsPage() {
 
   useEffect(() => { loadShops(); }, [user?.uid]);
   useEffect(() => { loadSeats(selectedShopId); }, [selectedShopId, user?.uid]);
-  useEffect(() => {
-    const selectedShop = shops.find((shop) => shop.id === selectedShopId);
-    const tokenIsActive = selectedShop?.activationToken && (!selectedShop.activationTokenExpiresAt || selectedShop.activationTokenExpiresAt > Date.now());
-    setActivationToken(tokenIsActive ? selectedShop.activationToken || '' : '');
-  }, [selectedShopId, shops]);
-
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) return;
@@ -89,7 +89,7 @@ export default function ShopsPage() {
       maxDevicesAllowed: Number(form.maxDevicesAllowed),
     });
     if (result.success) {
-      setActivationToken(result.activationToken || '');
+      setActivationTokens((currentTokens) => ({ ...currentTokens, [result.shopId || '']: result.activationToken || '' }));
       setForm({ shopId: '', shopName: '', ownerEmail: '', ownerTemporaryPassword: '', maxUsersAllowed: '3', maxDevicesAllowed: '3' });
       await loadShops();
       setSelectedShopId(result.shopId || '');
@@ -125,7 +125,7 @@ export default function ShopsPage() {
     if (!auth?.currentUser || !selectedShopId) return;
     const result = await regenerateActivationTokenAction({ shopId: selectedShopId, idToken: await auth.currentUser.getIdToken() });
     if (result.success) {
-      setActivationToken(result.activationToken || '');
+      setActivationTokens((currentTokens) => ({ ...currentTokens, [selectedShopId]: result.activationToken || '' }));
       toast({ title: 'Activation token generated', description: 'Use this token on the replacement PC within 24 hours.' });
     } else toast({ variant: 'destructive', title: 'Token generation failed', description: result.error });
   };
@@ -146,7 +146,7 @@ export default function ShopsPage() {
               <div className="space-y-2"><Label htmlFor="device-limit">Package PC limit</Label><Input id="device-limit" type="number" min="1" value={form.maxDevicesAllowed} onChange={(e) => setForm({ ...form, maxDevicesAllowed: e.target.value })} required /></div>
               <Button type="submit" className="w-full" disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create Shop</Button>
             </form>
-            {activationToken && <div className="mt-4 rounded-md border bg-muted p-3"><p className="text-xs text-muted-foreground">Active activation token for the selected shop. Use it on each registered shop computer before it expires:</p><div className="flex items-center gap-2"><code className="font-semibold">{activationToken}</code><Button type="button" variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(activationToken)} title="Copy activation token"><Copy className="h-4 w-4" /></Button></div></div>}
+            {activationTokens[selectedShopId] && <div className="mt-4 rounded-md border bg-muted p-3"><p className="text-xs text-muted-foreground">Active activation token for the selected shop. Use it on each registered shop computer before it expires:</p><div className="flex items-center gap-2"><code className="font-semibold">{activationTokens[selectedShopId]}</code><Button type="button" variant="ghost" size="icon" onClick={() => navigator.clipboard.writeText(activationTokens[selectedShopId])} title="Copy activation token" /></div></div>}
           </CardContent>
         </Card>
         <Card>

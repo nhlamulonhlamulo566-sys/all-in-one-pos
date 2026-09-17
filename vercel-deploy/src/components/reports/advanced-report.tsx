@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { collection, collectionGroup, doc, query, where } from 'firebase/firestore';
+import { collection, doc, query, where } from 'firebase/firestore';
 import { Pie, PieChart, ResponsiveContainer, Tooltip, Cell } from 'recharts';
 import { useCollection, useDoc, useFirestore, useUser } from '@/firebase';
 import { useMemoFirebase } from '@/firebase/provider';
@@ -58,9 +58,8 @@ export function AdvancedReport() {
     return query(collection(firestore, 'products'), where('shopId', '==', scopedShopId));
   }, [firestore, profile, scopedShopId]);
   const saleItemsQuery = useMemoFirebase(() => {
-    if (!firestore || !profile || !scopedShopId) return null;
-    return query(collectionGroup(firestore, 'items'), where('shopId', '==', scopedShopId));
-  }, [firestore, profile, scopedShopId]);
+    return null;
+  }, []);
   const { data: products, isLoading: productsLoading } = useCollection<ReportProduct>(productsQuery);
   const { data: saleItems, isLoading: salesLoading } = useCollection<SaleItem>(saleItemsQuery);
   const [activeGroup, setActiveGroup] = useState<GroupKey>('groceries');

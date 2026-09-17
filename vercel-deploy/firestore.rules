@@ -218,7 +218,7 @@ service cloud.firestore {
      * @path /layaways/{layawayId}
      */
     match /layaways/{layawayId} {
-      allow read: if isSignedIn() && isAdmin() && canAccessShop(resource.data);
+      allow read: if isSignedIn() && (isAdmin() || isSuperAdmin()) && canAccessShop(resource.data);
       allow create: if isSignedIn() && isAdmin() && canAccessShop(request.resource.data);
       allow update: if isSignedIn() && isAdmin() && canAccessExistingShop(resource.data) && canAccessShop(request.resource.data);
       allow delete: if isSignedIn() && isAdmin() && canAccessExistingShop(resource.data);

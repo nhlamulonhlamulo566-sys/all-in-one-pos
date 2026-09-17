@@ -23,6 +23,7 @@
 
 # debug
 npm-debug.log*
+electron-builder-release.log
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*

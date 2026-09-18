@@ -47,6 +47,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     title: 'All In One POS',
+    icon: path.join(__dirname, '../build/icon.ico'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

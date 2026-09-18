@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: 'All In One POS',
   description: 'Inventory management and stock counting application',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/00.png',
+    shortcut: '/00.png',
+    apple: '/00.png',
+  },
 };
 
 const ptSans = PT_Sans({
